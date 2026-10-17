@@ -2,6 +2,7 @@ import os
 from os import path
 import time
 import shutil
+from psutil import cpu_count
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -11,12 +12,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 而对于标签来说，类名文件只需重命名即可，其余标签坐标归一化或计算则是计算密集型操作（多进程）
 """
 softwarePath = os.getcwd().replace("\\", "/")
-DataList = []
-YolokindList = []
-CCPDkindList = []
-DataAmount = 0
-LoadFinished = threading.Event()
-LoadFinished.clear()
+dataList = []
+yoloKindList = []
+CCPDKindList = []
+dataAmount = 0
+loadFinished = threading.Event()
+loadFinished.clear()
+
 
 
 def checkFolders(folderPath: str) -> None:
@@ -42,33 +44,33 @@ def SafeThreading(functions) -> threading.Thread:
 
 
 def CheckThreadFinishYolo() -> None:
-    global YolokindList
-    global DataAmount
-    global LoadFinished
+    global yoloKindList
+    global dataAmount
+    global loadFinished
     while True:
-        print(f"Done:{len(YolokindList)} Total:{DataAmount}")
-        if len(YolokindList) == DataAmount:
-            LoadFinished.set()
+        print(f"Done:{len(yoloKindList)} Total:{dataAmount}")
+        if len(yoloKindList) == dataAmount:
+            loadFinished.set()
             break
         else:
             time.sleep(1)
 
 
 def CheckThreadFinishCCPD() -> None:
-    global CCPDkindList
-    global DataAmount
-    global LoadFinished
+    global CCPDKindList
+    global dataAmount
+    global loadFinished
     while True:
-        print(f"Done:{len(CCPDkindList)} Total:{DataAmount}")
-        if len(CCPDkindList) == DataAmount:
-            LoadFinished.set()
+        print(f"Done:{len(CCPDKindList)} Total:{dataAmount}")
+        if len(CCPDKindList) == dataAmount:
+            loadFinished.set()
             break
         else:
             time.sleep(1)
 
 
 def scanner_file(url) -> None:
-    global DataList
+    global dataList
     # 查看指定目录下的文件
     files = os.listdir(url)
     # print(files)``
@@ -83,7 +85,7 @@ def scanner_file(url) -> None:
                 if "\\" in real_path:
                     real_path = real_path.replace("\\", "/")
                 # print(real_path)
-                DataList.append(real_path)
+                dataList.append(real_path)
         elif path.isdir(real_path):
             # 递归输出文件夹下的文件
             scanner_file(real_path)
@@ -93,34 +95,34 @@ def scanner_file(url) -> None:
 
 
 def judgeYoloKind(PathString: str) -> None:
-    global YolokindList
+    global yoloKindList
     if "classes.txt" in PathString:
-        YolokindList.append((6, PathString))
+        yoloKindList.append((6, PathString))
     temp = "".join(PathString.split("/")[:-1])
     if "label" in temp or "labels" in temp:
         if "train" in temp:
-            YolokindList.append((0, PathString))
+            yoloKindList.append((0, PathString))
         if "test" in temp:
-            YolokindList.append((1, PathString))
+            yoloKindList.append((1, PathString))
         if "val" in temp:
-            YolokindList.append((2, PathString))
+            yoloKindList.append((2, PathString))
     elif "pic" in temp or "images" in temp:
         if "train" in temp:
-            YolokindList.append((3, PathString))
+            yoloKindList.append((3, PathString))
         if "test" in temp:
-            YolokindList.append((4, PathString))
+            yoloKindList.append((4, PathString))
         if "val" in temp:
-            YolokindList.append((5, PathString))
+            yoloKindList.append((5, PathString))
     else:
         raise ValueError("That is not corrected Yolo format dataset!")
 
 
 def judgeYoloContent(PathString: str) -> None:
-    global YolokindList
+    global yoloKindList
     if "label" in PathString:
-        YolokindList.append((0, PathString))
+        yoloKindList.append((0, PathString))
     elif "pic" in PathString:
-        YolokindList.append((1, PathString))
+        yoloKindList.append((1, PathString))
     else:
         raise ValueError("That is not corrected Yolo format dataset!")
 
@@ -130,78 +132,78 @@ def judgeYoloContent(PathString: str) -> None:
 # 每行path前面记得加数据集的目录位置（可以用"/".join(PathString.split("/")[:-2])确定）
 # 自定义分割另写一个函数
 def judgeCCPD2019Kind(PathString: str) -> None:
-    global CCPDkindList
+    global CCPDKindList
     if "jpg" in PathString:
-        CCPDkindList.append((0, PathString))
+        CCPDKindList.append((0, PathString))
     if "classes.txt" in PathString:
-        CCPDkindList.append((0, PathString))
+        CCPDKindList.append((0, PathString))
     elif "train.txt" in PathString:
         if "tfPath" not in globals().keys():
             tfPath = "/".join(PathString.split("/")[:-2]) + "/"
         with open(PathString, "r") as trainfile:
             tfcontent = trainfile.readlines()
         for tfline in tfcontent:
-            CCPDkindList.append((1, tfPath + tfline))
+            CCPDKindList.append((1, tfPath + tfline))
     elif "val.txt" in PathString:
         if "vfPath" not in globals().keys():
             vfPath = "/".join(PathString.split("/")[:-2]) + "/"
         with open(PathString, "r") as valfile:
             vfcontent = valfile.readlines()
         for vfline in vfcontent:
-            CCPDkindList.append((2, vfPath + vfline))
+            CCPDKindList.append((2, vfPath + vfline))
     elif "test.txt" in PathString:
         if "testfPath" not in globals().keys():
             testfPath = "/".join(PathString.split("/")[:-2]) + "/"
         with open(PathString, "r") as testfile:
             testfcontent = testfile.readlines()
         for testfline in testfcontent:
-            CCPDkindList.append((3, testfPath + testfline))
+            CCPDKindList.append((3, testfPath + testfline))
     elif "txt" in PathString:
-        CCPDkindList.append((4, PathString))
+        CCPDKindList.append((4, PathString))
     else:
         raise ValueError("That is not corrected CCPD format dataset!")
 
 
 def judgeCCPD2020Kind(PathString: str) -> None:
-    global CCPDkindList
+    global CCPDKindList
     if "jpg" in PathString:
-        CCPDkindList.append((0, PathString))
+        CCPDKindList.append((0, PathString))
     elif "classes.txt" in PathString:
-        CCPDkindList.append((1, PathString))
+        CCPDKindList.append((1, PathString))
     elif "txt" in PathString:
-        CCPDkindList.append((2, PathString))
+        CCPDKindList.append((2, PathString))
     else:
         raise ValueError("That is not corrected CCPD format dataset!")
 
 
 # Load Yolo Dataset
 def loadYolo(Path, AnyKind: bool, threadAmount=None) -> list:
-    global YolokindList
-    global DataList
-    global DataAmount
-    global LoadFinished
+    global yoloKindList
+    global dataList
+    global dataAmount
+    global loadFinished
 
     SearchPath = Path
     scanner_file(SearchPath)
-    DataAmount = len(DataList)
+    dataAmount = len(dataList)
     kindList = []
     JudgePools = ThreadPoolExecutor(
         max_workers=threadAmount, thread_name_prefix="Thread"
     )
     if AnyKind:
-        for dataPath in DataList:
+        for dataPath in dataList:
             JudgePools.submit(judgeYoloKind, dataPath)
     else:
-        for dataPath in DataList:
+        for dataPath in dataList:
             JudgePools.submit(judgeYoloContent, dataPath)
     SafeThreading(CheckThreadFinishYolo).start()
     print("Now loading...")
-    LoadFinished.wait()
-    LoadFinished.clear()
-    kindList = YolokindList
-    YolokindList = []
+    loadFinished.wait()
+    loadFinished.clear()
+    kindList = yoloKindList
+    yoloKindList = []
     JudgePools.shutdown()
-    DataList = []
+    dataList = []
     return kindList
 
 
@@ -213,40 +215,38 @@ def loadDark(Path):
 # Load For Current Dataset
 # Load CCPD Dataset
 def loadCCPD(Path, Kind: tuple[int, str], threadAmount=None) -> list:
-    global CCPDkindList
-    global DataList
-    global DataAmount
-    global LoadFinished
+    global CCPDKindList
+    global dataList
+    global dataAmount
+    global loadFinished
 
     SearchPath = Path
     scanner_file(SearchPath)
-    DataAmount = len(DataList)
+    dataAmount = len(dataList)
     kindList = []
     JudgePools = ThreadPoolExecutor(
         max_workers=threadAmount, thread_name_prefix="Thread"
     )
     if Kind[0] == 2019:
         if Kind[1] == "official":
-            for dataPath in DataList:
+            for dataPath in dataList:
                 JudgePools.submit(judgeCCPD2019Kind, dataPath)
     else:
-        for dataPath in DataList:
+        for dataPath in dataList:
             JudgePools.submit(judgeCCPD2020Kind, dataPath)
     SafeThreading(CheckThreadFinishCCPD).start()
     print("Now loading...")
-    LoadFinished.wait()
-    LoadFinished.clear()
-    kindList = CCPDkindList
-    CCPDkindList = []
+    loadFinished.wait()
+    loadFinished.clear()
+    kindList = CCPDKindList
+    CCPDKindList = []
     JudgePools.shutdown()
-    DataList = []
+    dataList = []
     return kindList
 
 
 if __name__ == "__main__":
     print(os.getcwd().replace("\\", "/"))
-    print(f"Result:{loadYolo("I:/实验室数据集/dataset", False)}")
-    print(f"Result:{loadYolo("I:/个人数据集/goldenbrick", True)}")
-    print(
-        f"Result:{loadCCPD("J:/Object-detection/dataset/CCPD2019", (2019,"official"))}"
-    )
+    # print(f"Result:{loadYolo("I:/实验室数据集/dataset", False)}")
+    # print(f"Result:{loadYolo("I:/个人数据集/goldenbrick", False)}")
+    # print(f"Result:{loadCCPD("J:/Object-detection/dataset/CCPD2019", (2019,"official"))}")
