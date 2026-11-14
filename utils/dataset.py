@@ -5,7 +5,7 @@ import dataloader as dlr
 # 输出端
 
 
-def GoYolo():
+def mkYoloDir():
     folderChecker = os.listdir(f"{dlr.softwarePath}/output")
     if len(folderChecker) == 0:
         savePath = f"{dlr.softwarePath}/output/0"
@@ -27,5 +27,5 @@ def GoYolo():
     dlr.checkFolders(savePath + "/pic/val")
 
 
-def GoDark():
+def mkDarkYoloDir():
     pass
