@@ -2,6 +2,8 @@
 
 本文档整理常见 2D 目标识别数据集的下载地址、标注格式与目录结构，便于选择与格式对齐。
 
+<!-- 注意，以下凡是注释的内容均不可信，尚未人工验证。 -->
+
 ### COCO
 
 COCO 是 2D 目标检测最常用的基准数据集之一，YOLO 系模型通常使用 COCO 2017 版本。
@@ -48,7 +50,7 @@ coco2017/
 └── val2017  [5000 entries exceeds filelimit, not opening dir]
 ```
 
-- COCO JSON 格式
+<!-- - COCO JSON 格式
 
 COCO 原生标注为单个 JSON 文件，目标检测使用 `instances_*.json`。关键字段结构如下：
 
@@ -70,7 +72,7 @@ COCO 原生标注为单个 JSON 文件，目标检测使用 `instances_*.json`�
 ```
 
 - `bbox` 为像素坐标，`[x, y, width, height]`，`x, y` 是**左上角**坐标。
-- `category_id` 从 COCO 的 80 类映射中取值（如 person = 1）。
+- `category_id` 从 COCO 的 80 类映射中取值（如 person = 1）。 -->
 
 ### PASCAL VOC
 
