@@ -1,5 +1,7 @@
 import os
 from os import path
+from pathlib import Path
+import sys
 import time
 import shutil
 from psutil import cpu_count
@@ -15,6 +17,22 @@ def SafeThreading(functions) -> threading.Thread:
     aThread = threading.Thread(target=functions)
     aThread.daemon = True
     return aThread
+
+
+def get_app_utils_dir() -> str:
+    """返回用户实际工作目录下工具文件夹绝对路径"""
+    if getattr(sys, "frozen", False):
+        # PyInstaller 打包后运行：sys.executable 指向 exe 本身
+        return os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        # 普通脚本运行：__file__ 指向脚本本身
+        return os.path.dirname(os.path.abspath(__file__))
+
+
+def get_app_root_dir() -> str:
+    """返回用户实际工作目录下项目根目录绝对路径"""
+    return Path(get_app_utils_dir()).parent
+
 
 def checkFolders(folderPath: str) -> None:
     if not path.exists(folderPath):
