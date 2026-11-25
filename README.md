@@ -7,6 +7,7 @@ DaTong is a toolkit designed to streamline the preprocessing of datasets for dee
 - [ ] Downloading common datasets
 - [ ] cli python package
 - [x] Basic conversion between Yolo and COCO datasets formats
+- [x] Basic downloader and ndjson support
 
 ## License
 Apache 2.0
