@@ -1,2 +1,4 @@
 note.md
 .env
+test/coco2017.ndjson
+*/__pycache__
